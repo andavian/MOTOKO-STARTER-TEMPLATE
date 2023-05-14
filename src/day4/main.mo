@@ -66,11 +66,11 @@ actor class MotoCoin() {
     };
   };
 
-  let studentsBootcamp : actor {
+  // Airdrop 100 MotoCoin to any student that is part of the Bootcamp.
+  let studentsBootcamp = actor ("rww3b -zqaaa -aaaam -abioa -cai") : actor {
     getAllStudentsPrincipal : shared () -> async [Principal];
-  } = actor ("rww3b -zqaaa -aaaam -abioa -cai");
+  };
 
-  // Airdrop 1000 MotoCoin to any student that is part of the Bootcamp.
   public func airdrop() : async Result.Result<(), Text> {
     try {
       let students = await studentsBootcamp.getAllStudentsPrincipal();

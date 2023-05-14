@@ -14,25 +14,56 @@ import Buffer "mo:base/Buffer";
 import IC "Ic";
 import HTTP "Http";
 import Type "Types";
+import Calculator "Calculator";
 
 actor class Verifier() {
   type StudentProfile = Type.StudentProfile;
+  var studentProfileStore : HashMap.HashMap<Principal, StudentProfile> = HashMap.HashMap<Principal, StudentProfile>(5, Principal.equal, Principal.hash);
 
   // STEP 1 - BEGIN
   public shared ({ caller }) func addMyProfile(profile : StudentProfile) : async Result.Result<(), Text> {
-    return #err("not implemented");
+    let profileOption = ?studentProfileStore.get(caller);
+    if (?profileOption != null) {
+      return #err("Profile already exists");
+    } else {
+      studentProfileStore.put(caller, profile);
+      return #ok(());
+    };
   };
 
   public shared ({ caller }) func seeAProfile(p : Principal) : async Result.Result<StudentProfile, Text> {
-    return #err("not implemented");
+    let profileOpt = studentProfileStore.get(p);
+    switch (profileOpt) {
+      case (?profile) {
+        return #ok(profile);
+      };
+      case (null) {
+        return #err("Profile not found");
+      };
+    };
   };
 
   public shared ({ caller }) func updateMyProfile(profile : StudentProfile) : async Result.Result<(), Text> {
-    return #err("not implemented");
+    switch (?studentProfileStore.get(caller)) {
+      case (null) {
+        return #err("Profile not found");
+      };
+      case (?existingProfile) {
+        studentProfileStore.put(caller, profile);
+        return #ok(());
+      };
+    };
   };
 
   public shared ({ caller }) func deleteMyProfile() : async Result.Result<(), Text> {
-    return #err("not implemented");
+    switch (?studentProfileStore.remove(caller)) {
+      case (null) {
+        return #err("Profile not found");
+      };
+      case (opt) {
+        return #ok(());
+      };
+    };
   };
   // STEP 1 - END
 
@@ -42,8 +73,37 @@ actor class Verifier() {
   public type TestError = Type.TestError;
 
   public func test(canisterId : Principal) : async TestResult {
-    return #err(#UnexpectedError("not implemented"));
+    let calculator = await Calculator.Calculator();
+
+    // Escenario 1: Llamada a reset seguida de add(1) devuelve un valor incorrecto.
+    let result1 = await calculator.reset();
+    if (Int.notEqual(result1, 0)) {
+      return #err(#UnexpectedValue "Reset failed");
+    };
+
+    let result2 = await calculator.add(1);
+    if (Int.notEqual(result2, 2)) {
+      return #err(#UnexpectedValue "Addition failed");
+    };
+
+    // Escenario 2: Llamadas a la calculadora que devuelven resultados esperados.
+    let result3 = await calculator.reset();
+    if (Int.notEqual(result3, 1)) {
+      return #err(#UnexpectedValue "Reset failed");
+    };
+
+    let result4 = await calculator.add(2);
+    if (Int.notEqual(result4, 2)) {
+      return #err(#UnexpectedValue "Addition failed");
+    };
+
+    let result5 = await calculator.sub(1);
+    if (Int.notEqual(result5, 1)) {
+      return #err(#UnexpectedValue "Subtraction failed");
+    };
+    return #ok(());
   };
+
   // STEP - 2 END
 
   // STEP 3 - BEGIN
